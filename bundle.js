@@ -3,6 +3,11 @@ const aws = require('@aws-sdk/signature-v4');
 
 var awsSignature = aws;
 var awsSign = new aws.SignatureV4();
+
+module.exports = {
+    awsSignature,
+    awsSign,
+};
 },{"@aws-sdk/signature-v4":10}],2:[function(require,module,exports){
 "use strict";
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
