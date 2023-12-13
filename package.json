@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/credential-provider-node": "^3.470.0",
+    "@aws-sdk/protocol-http": "^3.374.0",
     "@aws-sdk/signature-v4": "^3.374.0",
     "@babel/core": "^7.23.6",
     "@babel/plugin-transform-class-properties": "^7.23.3",
@@ -17,7 +19,9 @@
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "cross-fetch": "^4.0.0",
-    "esmify": "^2.1.1"
+    "esmify": "^2.1.1",
+    "node-fetch": "^3.3.2",
+    "watchify": "^4.0.0"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1"
