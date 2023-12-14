@@ -1,5 +1,6 @@
 import Modal from "./src/Modal/Modal";
 import GenAIAPIClient, { GEN_AI_TYPES } from "./src/Modal/models/PVGenAIAPIClient";
+import { getTitleMetadata } from "./src/utils/messaging";
 
 class PVGenAI {
     constructor(props) {
@@ -119,13 +120,19 @@ class RenderUI {
         document.querySelector('.review-me-loader').classList.remove('review-me-hidden');
     };
 
-    extractTitleName = () => {
-        const text = document.querySelector('title').text;
-        const [_first, titleName] = text.split(': ');
-        return titleName;
+    extractTitleName = async () => {
+        const titleMetadata = await getTitleMetadata();
+        if (!titleMetadata) {
+            const text = document.querySelector('title').text;
+            const [_first, titleName] = text.split(': ');
+            return titleName;
+        } else {
+            return titleMetadata.catalog.title;
+        }
     }
 
-    activateListeners = () => {
+    activateListeners = async () => {
+        const title = await this.extractTitleName();
         this._reviewMeButton.addEventListener('click', async (e) => {
             this.pvGenInstance = new GenAIAPIClient({
                 type: GEN_AI_TYPES.CLAUDE_V1,
@@ -133,7 +140,7 @@ class RenderUI {
             this._modalContainer.classList.remove('review-me-hidden');
             const result = await this.pvGenInstance.makeRequest({
                 payload: {
-                    prompt: `Can you provide review for ${this.extractTitleName()}?`,
+                    prompt: `Can you give me a detailed critic of the movie ${title}?`,
                 },
             });
             document.querySelector('.review-me-loader').classList.add('review-me-hidden');
@@ -165,28 +172,6 @@ class RenderUI {
     };
 
     renderUI = async () => {
-        // const titles = [];
-        // await fetch('https://www.primevideo.com/region/eu/detail/0FJ3FIK7GRE81SQ9V11LI1WSNY/ref=aiv_DVAPI_getWatchHistorySettingsPage', {
-        //     method: 'GET',
-        //     mode: 'no-cors',
-        //     headers: {
-        //         'Accept-Encoding': 'gzip, deflate, br',
-        //         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-        //     }
-        // }).then(function(res) {
-        //     return res.text();
-        // }).then(function(html) {
-        //     console.log(`html = ${html}`);
-        //     const dummy = document.createElement('div');
-        //     dummy.className = 'review-me-hidden review-me-watch-history';
-        //     dummy.innerHTML = html;
-        //     document.querySelector('body').appendChild(dummy);
-        //     document.querySelectorAll('.review-me-watch-history body [data-automation-id="activity-history-items"] ul > li').forEach((item) => {
-        //         titles.push(item.querySelector('> ul > li > div > div > div :nth-child(1) > a').text);
-        //     });
-        //     console.log(titles);
-        //     // dummy.querySelector('body [data-automation-id="activity-history-items"] ul > li > ul > li > div > div > div :nth-child(1) > a').text;
-        // });;
         this.removeJSErrorModal();
         this.renderModal();
         this._container.appendChild(this.reviewMeButton());
