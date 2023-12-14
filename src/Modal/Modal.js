@@ -1,3 +1,4 @@
+import { ACTION_PROMPTS, COMEDY_PROMPTS, SCI_FI_PROMPTS } from "../constants/prompts";
 import { MsgTypes, getContentType, getTitleMetadata, updatePrompt } from "../utils/messaging";
 
 import GenAIAPIClient, { GEN_AI_TYPES } from "./models/PVGenAIAPIClient";
@@ -25,9 +26,20 @@ export default class Modal {
                 promptQuery: 'Can you suggest some other <contentType>s as I am not interested in watching <strong><title></strong>?',
                 promptQueryPayload: 'Can you suggest some other <contentType>s based on my watch history of <movie_list> as I am not interested in watching <strong><title></strong>',
                 promptLabel: 'Not for me',
-                relatedPrompts: [{ promptType: 'similar_recent_movies', showResponse: true }, {promptType: 'free_prime_movies'}, {promptType: 'holiday_season_movies'}, {promptType: 'restart'}],
+                relatedPrompts: [{ promptType: 'im_in_the_mood_for' }, { promptType: 'similar_recent_movies', showResponse: true }, {promptType: 'free_prime_movies'}, {promptType: 'holiday_season_movies'}, {promptType: 'restart'}],
                 priority: 2,
-            }, {
+            },
+            {
+                promptType: 'im_in_the_mood_for',
+                promptQuery: 'What type of movies do you generally enjoy?',
+                promptLabel: "I'm in the mood for",
+                relatedPrompts: [{ promptType: 'action_adventure_genre', showResponse: true }, {promptType: 'comedy_genre'}, {promptType: 'sci_fi_genre'}, { promptType: 'restart' }],
+                priority: 2,
+                handleLocally: true,
+            }, 
+            ...ACTION_PROMPTS,
+            ...COMEDY_PROMPTS,
+            ...SCI_FI_PROMPTS, {
                 promptType: 'holiday_season_movies',
                 promptQuery: 'Can you suggest some recent holiday season <contentType>s?',
                 promptQueryPayload: 'Can you suggest some recent holiday season <contentType>s?',
@@ -329,7 +341,10 @@ export default class Modal {
         try {
             const title = await this.extractTitleName();
             promptPill.addEventListener('click', async (e) => {
-                const query = prompt.promptQuery.replace(/<title>/g, title).replace(/<contentType>/g, getContentType());
+                if (prompt.handler) {
+                    prompt.handler.bind(this).call();
+                }
+                const query = prompt.promptQuery.replace(/<title>/g, title).replace(/<contentType>/g, getContentType()).replace(/<characterType>/g, this.characterType).replace(/<environmentType>/g, this.environment);
                 let queryPayload;
                 this.attachPromptInputToChat(query, MsgTypes.user);
                 this.currentPrompt = prompt;
@@ -340,7 +355,7 @@ export default class Modal {
                 }
                 
                 if (!prompt.handleLocally) {
-                    queryPayload = prompt.promptQueryPayload.replace(/<title>/g, title).replace(/<movie_list>/g, this.titleList.join(', ')).replace(/<contentType>/g, getContentType());
+                    queryPayload = prompt.promptQueryPayload.replace(/<title>/g, title).replace(/<movie_list>/g, this.titleList.join(', ')).replace(/<contentType>/g, getContentType()).replace(/<characterType>/g, this.characterType).replace(/<environmentType>/g, this.environment);
                     const result = await this.aiInstance.makeRequest({
                         payload: {
                             prompt: queryPayload,
