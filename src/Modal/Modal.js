@@ -1,5 +1,5 @@
 import { ACTION_PROMPTS, COMEDY_PROMPTS, SCI_FI_PROMPTS } from "../constants/prompts";
-import { MsgTypes, getContentType, getTitleMetadata, updatePrompt } from "../utils/messaging";
+import { MsgTypes, getContentType, getTitleMetadata, scrollToBottom, updatePrompt } from "../utils/messaging";
 
 import GenAIAPIClient, { GEN_AI_TYPES } from "./models/PVGenAIAPIClient";
 
@@ -48,8 +48,8 @@ export default class Modal {
                 priority: 2,
             },{
                 promptType: 'similar_movies',
-                promptQuery: 'Suggest <contentType> similar to <strong><title></strong>?',
-                promptQueryPayload: 'Suggest <contentType> similar to <title>?',
+                promptQuery: 'Suggest <contentType>s similar to <strong><title></strong>?',
+                promptQueryPayload: 'Suggest <contentType>s similar to <title>?',
                 promptLabel: 'Suggest Similar <contentType>s',
                 relatedPrompts: [{ promptType: 'similar_recent_movies', showResponse: true }, {promptType: 'free_prime_movies'}, {promptType: 'restart'}],
                 priority: 2,
@@ -153,12 +153,13 @@ export default class Modal {
                 height: 100%;
             }
             .review-me-result-container {
-                height: 85%;
+                height: 90%;
                 width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: end;
                 overflow-y: scroll;
+                border-bottom: 1px solid lightgrey;
             }
 
             .review-me-bot-msg-pill, .review-me-user-msg-pill {
@@ -232,27 +233,105 @@ export default class Modal {
                 flex: 1;
             }
             .review-me-prompt-pill {
-                padding: 5px 21px;
+                padding: 10px 21px;
                 background-color: antiquewhite;
                 border-radius: 20px;
                 margin-right: 1rem;
                 cursor: pointer;
                 font-size: 1.1rem;
                 height: 38px;
-                display: flex;
             }
             .review-me-prompts {
-                min-height: 15%;
+                height: 10%;
                 top: 3%;
                 text-align: right;
-                display: flex;
-                flex-direction: row;
-                flex-wrap: wrap;
                 justify-content: center;
+                overflow-x: scroll;
+                width: 100%;
+                display: block;
+                white-space: nowrap;
+                overflow-y: hidden;
+                padding: 1rem;
+                vertical-align: middle;
             }
             .review-me-prompt-pill:hover {
                 background-color: #EFD031;
             }
+            .review-me-prompt-pill > svg, .review-me-prompt-pill > img {
+                position: relative;
+                top: 5px;
+            }
+            .disable-click {
+                pointer-events: none;
+                opacity: 0.5;
+            }
+        
+        .rocket-loader {
+            text-align: center;
+            height: 3rem;
+            width: 100%;
+        }
+
+        main {
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+        .ip {
+            width: 5em;
+            height: 2em;
+        }
+        .ip__track {
+            stroke: hsl(var(--hue),90%,90%);
+            transition: stroke var(--trans-dur);
+        }
+        .ip__worm1,
+        .ip__worm2 {
+            animation: worm1 2s linear infinite;
+        }
+        .ip__worm2 {
+            animation-name: worm2;
+        }
+        
+        /* Dark theme */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: hsl(var(--hue),90%,5%);
+                --fg: hsl(var(--hue),90%,95%);
+            }
+            .ip__track {
+                stroke: hsl(var(--hue),90%,15%);
+            }
+        }
+        
+        /* Animation */
+        @keyframes worm1 {
+            from {
+                stroke-dashoffset: 0;
+            }
+            50% {
+                animation-timing-function: steps(1);
+                stroke-dashoffset: -358;
+            }
+            50.01% {
+                animation-timing-function: linear;
+                stroke-dashoffset: 358;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        @keyframes worm2 {
+            from {
+                stroke-dashoffset: 358;
+            }
+            50% {
+                stroke-dashoffset: 0;
+            }
+            to {
+                stroke-dashoffset: -358;
+            }
+        }
+            
         `;
         document.querySelector('head').append(styleElement);
     }
@@ -355,6 +434,9 @@ export default class Modal {
                 }
                 
                 if (!prompt.handleLocally) {
+                    this.addLoader();
+                    scrollToBottom();
+                    document.querySelector('.review-me-prompts').classList.add('disable-click');
                     queryPayload = prompt.promptQueryPayload.replace(/<title>/g, title).replace(/<movie_list>/g, this.titleList.join(', ')).replace(/<contentType>/g, getContentType()).replace(/<characterType>/g, this.characterType).replace(/<environmentType>/g, this.environment);
                     const result = await this.aiInstance.makeRequest({
                         payload: {
@@ -362,11 +444,56 @@ export default class Modal {
                         }
                     });
                     this.attachPromptInputToChat(result.response, MsgTypes.bot);
-                }            
+                }
+                this.removeLoader();
+                document.querySelector('.review-me-prompts').classList.remove('disable-click');
                 this.showPrompts();
             });
         } catch(err) {
             console.log(err);
+        }
+    }
+
+    addLoader = () => {
+        const loaderContainer = document.createElement('div');
+        loaderContainer.className = 'rocket-loader';
+        loaderContainer.innerHTML = `
+            <main>
+                <svg class="ip" viewBox="0 0 256 128" width="256px" height="128px" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#5ebd3e" />
+                            <stop offset="33%" stop-color="#ffb900" />
+                            <stop offset="67%" stop-color="#f78200" />
+                            <stop offset="100%" stop-color="#e23838" />
+                        </linearGradient>
+                        <linearGradient id="grad2" x1="1" y1="0" x2="0" y2="0">
+                            <stop offset="0%" stop-color="#e23838" />
+                            <stop offset="33%" stop-color="#973999" />
+                            <stop offset="67%" stop-color="#009cdf" />
+                            <stop offset="100%" stop-color="#5ebd3e" />
+                        </linearGradient>
+                    </defs>
+                    <g fill="none" stroke-linecap="round" stroke-width="16">
+                        <g class="ip__track" stroke="#ddd">
+                            <path d="M8,64s0-56,60-56,60,112,120,112,60-56,60-56"/>
+                            <path d="M248,64s0-56-60-56-60,112-120,112S8,64,8,64"/>
+                        </g>
+                        <g stroke-dasharray="180 656">
+                            <path class="ip__worm1" stroke="url(#grad1)" stroke-dashoffset="0" d="M8,64s0-56,60-56,60,112,120,112,60-56,60-56"/>
+                            <path class="ip__worm2" stroke="url(#grad2)" stroke-dashoffset="358" d="M248,64s0-56-60-56-60,112-120,112S8,64,8,64"/>
+                        </g>
+                    </g>
+                </svg>
+            </main>
+        `;
+        document.querySelector('.review-me-result-container').appendChild(loaderContainer);
+    }
+
+    removeLoader = () => {
+        const el = document.querySelector('.review-me-result-container .rocket-loader');
+        if (!!el) {
+            document.querySelector('.review-me-result-container .rocket-loader').remove();
         }
     }
 

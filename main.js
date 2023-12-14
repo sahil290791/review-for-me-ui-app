@@ -1,6 +1,6 @@
 import Modal from "./src/Modal/Modal";
 import GenAIAPIClient, { GEN_AI_TYPES } from "./src/Modal/models/PVGenAIAPIClient";
-import { getTitleMetadata } from "./src/utils/messaging";
+import { getTitleMetadata, scrollToBottom } from "./src/utils/messaging";
 
 class PVGenAI {
     constructor(props) {
@@ -145,6 +145,7 @@ class RenderUI {
             });
             document.querySelector('.review-me-loader').classList.add('review-me-hidden');
             this.updatePrompt(result);
+            scrollToBottom();
 
             // Additional context can be passed
             this._modalClass.renderPrompts();

@@ -17,9 +17,7 @@ export const updatePrompt = (response, msgType) => {
     const span = document.createElement('div');
     span.className = `pv-${MsgTypes[msgType]}-icon`;
 
-    if (msgType === MsgTypes.user) {
-        // span.textContent = document.querySelector('[data-automation-id="nav-active-profile-name"]').textContent.slice(0,2);
-    } else {
+    if (msgType !== MsgTypes.user) {
         span.textContent = 'PV';
         botMsgPill.appendChild(span);
     }
@@ -33,7 +31,6 @@ export const updatePrompt = (response, msgType) => {
 };
 
 let titleMetadata = undefined;
-let oldUrl = '';
 
 export const getContentType = () => {
     const data = JSON.parse(document.querySelector('body script[type="text/template"]').textContent);
