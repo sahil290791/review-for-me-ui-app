@@ -10,7 +10,23 @@ export const scrollToBottom = () => {
     }
 };
 
-export const updatePrompt = (response, msgType) => {
+function waitForMs(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function typeSentence(sentence, eleRef, delay = 5) {
+    const letters = sentence.split("");
+    let i = 0;
+    while(i < letters.length) {
+      await waitForMs(delay);
+      eleRef.append(letters[i]);
+      scrollToBottom();
+      i++;
+    }
+    return;
+}
+
+export const updatePrompt = async (response, msgType) => {
     const botMsgPill = document.createElement('div');
     botMsgPill.className = `review-me-${MsgTypes[msgType]}-msg-pill`;
 
@@ -20,13 +36,17 @@ export const updatePrompt = (response, msgType) => {
     if (msgType !== MsgTypes.user) {
         span.textContent = 'PV';
         botMsgPill.appendChild(span);
+        botMsgPill.innerHTML = botMsgPill.innerHTML + `
+            <span></span>
+        `;
+        document.querySelector('.review-me-result-container').appendChild(botMsgPill);
+        await typeSentence(response, botMsgPill.querySelector('span'));
+    } else {
+        botMsgPill.innerHTML = botMsgPill.innerHTML + `
+            <span>${response}</span>
+        `;
+        document.querySelector('.review-me-result-container').appendChild(botMsgPill);
     }
-
-    botMsgPill.innerHTML = botMsgPill.innerHTML + `
-        <span>${response}</span>
-    `;
-    
-    document.querySelector('.review-me-result-container').appendChild(botMsgPill);
     scrollToBottom();
 };
 
